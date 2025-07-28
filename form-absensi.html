@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Absensi Perangkat Desa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 400px; margin: auto; }
+    input, select, button { width: 100%; margin-top: 10px; padding: 8px; }
+    #msg { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h3>Form Absensi Perangkat Desa</h3>
+  <form id="absenForm">
+    <label>Nama</label>
+    <input type="text" name="nama" required>
+
+    <label>Jabatan</label>
+    <select name="jabatan" required>
+      <option value="Kepala Desa">Kepala Desa</option>
+      <option value="Sekretaris">Sekretaris</option>
+      <option value="Kaur Umum">Kaur Umum</option>
+      <option value="Kasi Pemerintahan">Kasi Pemerintahan</option>
+      <option value="Kadus 1">Kadus 1</option>
+    </select>
+
+    <label>Status</label>
+    <select name="status" id="status" required>
+      <option value="Hadir">Hadir</option>
+      <option value="Izin">Izin</option>
+      <option value="Sakit">Sakit</option>
+      <option value="Dinas Luar">Dinas Luar</option>
+    </select>
+
+    <input type="hidden" name="lat" id="lat">
+    <input type="hidden" name="lng" id="lng">
+
+    <button type="submit">Kirim Absensi</button>
+  </form>
+
+  <p id="msg"></p>
+
+  <script>
+    const form = document.getElementById('absenForm');
+    const msg = document.getElementById('msg');
+    const webAppURL = "https://script.google.com/macros/s/AKfycbxHepqSxanYQ-KsB8qJc-jn9fYA7EQfne6XLxl27bLV/dev"; // ← GANTI DENGAN URL DARI STEP 2
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        document.getElementById('lat').value = pos.coords.latitude;
+        document.getElementById('lng').value = pos.coords.longitude;
+      },
+      (err) => {
+        msg.textContent = "Gagal mengambil lokasi GPS: " + err.message;
+      }
+    );
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      fetch(webAppURL, {
+        method: 'POST',
+        body: formData
+      }).then(() => {
+        msg.textContent = "✅ Absensi berhasil dikirim!";
+        form.reset();
+      }).catch(() => {
+        msg.textContent = "❌ Gagal kirim absensi.";
+      });
+    });
+  </script>
+</body>
+</html>
