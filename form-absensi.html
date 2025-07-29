@@ -6,7 +6,7 @@
   <style>
     body { font-family: Arial; padding: 20px; max-width: 400px; margin: auto; }
     input, select, button { width: 100%; margin-top: 10px; padding: 8px; }
-    #msg { margin-top: 20px; font-weight: bold; }
+    #msg { margin-top: 20px; font-weight: bold; color: green; }
   </style>
 </head>
 <body>
@@ -17,6 +17,7 @@
 
     <label>Jabatan</label>
     <select name="jabatan" required>
+      <option value="">Pilih Jabatan</option>
       <option value="Kepala Desa">Kepala Desa</option>
       <option value="Sekretaris">Sekretaris</option>
       <option value="Kaur Umum">Kaur Umum</option>
@@ -26,6 +27,7 @@
 
     <label>Status</label>
     <select name="status" id="status" required>
+      <option value="">Pilih Status</option>
       <option value="Hadir">Hadir</option>
       <option value="Izin">Izin</option>
       <option value="Sakit">Sakit</option>
@@ -43,29 +45,38 @@
   <script>
     const form = document.getElementById('absenForm');
     const msg = document.getElementById('msg');
-    const webAppURL = "https://script.google.com/macros/s/AKfycbwrN7oXkiRuC_mHrYM3-gaAjbGIKYL9EulH6rdXDmywsnAgkbYu74A4SiAqJorP-DsG3g/exec"; // ← GANTI DENGAN URL DARI STEP 2
+    const webAppURL = "https://script.google.com/macros/s/AKfycbzOQ8OC3fP2pMzeGXvrzxVM0g8RNIsUrt_B3xVNF0rDVhvIJRlJ4nF2DzDfNY5iXxCn/exec"; // ← GANTI DENGAN URL Web App dari Apps Script
 
+    // Ambil lokasi GPS
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         document.getElementById('lat').value = pos.coords.latitude;
         document.getElementById('lng').value = pos.coords.longitude;
       },
       (err) => {
-        msg.textContent = "Gagal mengambil lokasi GPS: " + err.message;
+        msg.style.color = "red";
+        msg.textContent = "Gagal ambil lokasi: " + err.message;
       }
     );
 
+    // Submit Form
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       const formData = new FormData(form);
       fetch(webAppURL, {
         method: 'POST',
         body: formData
-      }).then(() => {
-        msg.textContent = "✅ Absensi berhasil dikirim!";
-        form.reset();
+      }).then(res => {
+        if (res.ok) {
+          msg.style.color = "green";
+          msg.textContent = "✅ Absensi berhasil dikirim!";
+          form.reset();
+        } else {
+          throw new Error("Server error");
+        }
       }).catch(() => {
-        msg.textContent = "❌ Gagal kirim absensi.";
+        msg.style.color = "red";
+        msg.textContent = "❌ Gagal kirim absensi. Cek koneksi & perizinan lokasi.";
       });
     });
   </script>
