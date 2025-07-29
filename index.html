@@ -1,25 +1,47 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Absensi Perangkat Desa</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f2f2f2; }
-    form { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    label { display: block; margin-top: 10px; }
-    input, select, button { padding: 10px; width: 100%; margin-top: 5px; }
-    .success { color: green; }
-    .error { color: red; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 1em;
+    }
+    .success { color: green; margin-top: 15px; }
+    .error { color: red; margin-top: 15px; }
   </style>
 </head>
 <body>
-  <h2>Form Absensi Perangkat Desa</h2>
+
+  <h2 style="text-align:center">Form Absensi Perangkat Desa</h2>
+
   <form id="absensiForm">
     <label for="nama">Nama:</label>
-    <input type="text" id="nama" name="nama" required>
+    <input type="text" id="nama" name="nama" required />
 
     <label for="jabatan">Jabatan:</label>
-    <input type="text" id="jabatan" name="jabatan" required>
+    <input type="text" id="jabatan" name="jabatan" required />
 
     <label for="status">Status:</label>
     <select id="status" name="status" required>
@@ -35,17 +57,19 @@
   <p id="msg"></p>
 
   <script>
-    const form = document.getElementById('absensiForm');
-    const msg = document.getElementById('msg');
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzOQ8OC3fP2pMzeGXvrzxVM0g8RNIsUrt_B3xVNF0rDVhvIJRlJ4nF2DzDfNY5iXxCn/exec"; // ← Ganti URL ini!
+    const form = document.getElementById("absensiForm");
+    const msg = document.getElementById("msg");
 
-    form.addEventListener('submit', function(e) {
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzOQ8OC3fP2pMzeGXvrzxVM0g8RNIsUrt_B3xVNF0rDVhvIJRlJ4nF2DzDfNY5iXxCn/exec"; // Ganti sesuai Web App kamu
+
+    form.addEventListener("submit", function (e) {
       e.preventDefault();
-      msg.textContent = "Mengirim lokasi...";
+      msg.textContent = "📍 Mengambil lokasi...";
+      msg.className = "";
 
       if (!navigator.geolocation) {
         msg.textContent = "❌ Lokasi tidak didukung oleh browser.";
-        msg.className = 'error';
+        msg.className = "error";
         return;
       }
 
@@ -54,37 +78,39 @@
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
 
-          const data = new URLSearchParams();
-          data.append("nama", form.nama.value);
-          data.append("jabatan", form.jabatan.value);
-          data.append("status", form.status.value);
-          data.append("lat", lat);
-          data.append("lng", lng);
+          const formData = new FormData();
+          formData.append("nama", form.nama.value);
+          formData.append("jabatan", form.jabatan.value);
+          formData.append("status", form.status.value);
+          formData.append("lat", lat);
+          formData.append("lng", lng);
+
+          msg.textContent = "📤 Mengirim data absensi...";
 
           fetch(scriptURL, {
             method: "POST",
-            body: data,
+            body: formData,
           })
             .then((response) => response.json())
             .then((res) => {
               if (res.status === "OK") {
                 msg.textContent = "✅ Absensi berhasil dikirim.";
-                msg.className = 'success';
+                msg.className = "success";
                 form.reset();
               } else {
                 msg.textContent = "❌ Gagal kirim absensi.";
-                msg.className = 'error';
+                msg.className = "error";
               }
             })
             .catch((error) => {
               console.error("Error!", error);
-              msg.textContent = "❌ Gagal kirim absensi. Cek koneksi & perizinan lokasi.";
-              msg.className = 'error';
+              msg.textContent = "❌ Gagal kirim absensi. Cek koneksi & izin lokasi.";
+              msg.className = "error";
             });
         },
         () => {
           msg.textContent = "❌ Gagal mengambil lokasi.";
-          msg.className = 'error';
+          msg.className = "error";
         }
       );
     });
