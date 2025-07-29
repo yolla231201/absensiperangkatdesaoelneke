@@ -1,41 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+  <meta charset="UTF-8">
   <title>Absensi Perangkat Desa</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: Arial; padding: 20px; max-width: 400px; margin: auto; }
-    input, select, button { width: 100%; margin-top: 10px; padding: 8px; }
-    #msg { margin-top: 20px; font-weight: bold; color: green; }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f2f2f2; }
+    form { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 10px; }
+    input, select, button { padding: 10px; width: 100%; margin-top: 5px; }
+    .success { color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h3>Form Absensi Perangkat Desa</h3>
-  <form id="absenForm">
-    <label>Nama</label>
-    <input type="text" name="nama" required>
+  <h2>Form Absensi Perangkat Desa</h2>
+  <form id="absensiForm">
+    <label for="nama">Nama:</label>
+    <input type="text" id="nama" name="nama" required>
 
-    <label>Jabatan</label>
-    <select name="jabatan" required>
-      <option value="">Pilih Jabatan</option>
-      <option value="Kepala Desa">Kepala Desa</option>
-      <option value="Sekretaris">Sekretaris</option>
-      <option value="Kaur Umum">Kaur Umum</option>
-      <option value="Kasi Pemerintahan">Kasi Pemerintahan</option>
-      <option value="Kadus 1">Kadus 1</option>
-    </select>
+    <label for="jabatan">Jabatan:</label>
+    <input type="text" id="jabatan" name="jabatan" required>
 
-    <label>Status</label>
-    <select name="status" id="status" required>
-      <option value="">Pilih Status</option>
+    <label for="status">Status:</label>
+    <select id="status" name="status" required>
+      <option value="">--Pilih Status--</option>
       <option value="Hadir">Hadir</option>
       <option value="Izin">Izin</option>
       <option value="Sakit">Sakit</option>
-      <option value="Dinas Luar">Dinas Luar</option>
     </select>
-
-    <input type="hidden" name="lat" id="lat">
-    <input type="hidden" name="lng" id="lng">
 
     <button type="submit">Kirim Absensi</button>
   </form>
@@ -43,41 +35,58 @@
   <p id="msg"></p>
 
   <script>
-    const form = document.getElementById('absenForm');
+    const form = document.getElementById('absensiForm');
     const msg = document.getElementById('msg');
-    const webAppURL = "https://script.google.com/macros/s/AKfycbzOQ8OC3fP2pMzeGXvrzxVM0g8RNIsUrt_B3xVNF0rDVhvIJRlJ4nF2DzDfNY5iXxCn/exec"; // ← GANTI DENGAN URL Web App dari Apps Script
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzOQ8OC3fP2pMzeGXvrzxVM0g8RNIsUrt_B3xVNF0rDVhvIJRlJ4nF2DzDfNY5iXxCn/exec"; // ← Ganti URL ini!
 
-    // Ambil lokasi GPS
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        document.getElementById('lat').value = pos.coords.latitude;
-        document.getElementById('lng').value = pos.coords.longitude;
-      },
-      (err) => {
-        msg.style.color = "red";
-        msg.textContent = "Gagal ambil lokasi: " + err.message;
-      }
-    );
-
-    // Submit Form
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', function(e) {
       e.preventDefault();
-      const formData = new FormData(form);
-      fetch(webAppURL, {
-        method: 'POST',
-        body: formData
-      }).then(res => {
-        if (res.ok) {
-          msg.style.color = "green";
-          msg.textContent = "✅ Absensi berhasil dikirim!";
-          form.reset();
-        } else {
-          throw new Error("Server error");
+      msg.textContent = "Mengirim lokasi...";
+
+      if (!navigator.geolocation) {
+        msg.textContent = "❌ Lokasi tidak didukung oleh browser.";
+        msg.className = 'error';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          const data = new URLSearchParams();
+          data.append("nama", form.nama.value);
+          data.append("jabatan", form.jabatan.value);
+          data.append("status", form.status.value);
+          data.append("lat", lat);
+          data.append("lng", lng);
+
+          fetch(scriptURL, {
+            method: "POST",
+            body: data,
+          })
+            .then((response) => response.json())
+            .then((res) => {
+              if (res.status === "OK") {
+                msg.textContent = "✅ Absensi berhasil dikirim.";
+                msg.className = 'success';
+                form.reset();
+              } else {
+                msg.textContent = "❌ Gagal kirim absensi.";
+                msg.className = 'error';
+              }
+            })
+            .catch((error) => {
+              console.error("Error!", error);
+              msg.textContent = "❌ Gagal kirim absensi. Cek koneksi & perizinan lokasi.";
+              msg.className = 'error';
+            });
+        },
+        () => {
+          msg.textContent = "❌ Gagal mengambil lokasi.";
+          msg.className = 'error';
         }
-      }).catch(() => {
-        msg.style.color = "red";
-        msg.textContent = "❌ Gagal kirim absensi. Cek koneksi & perizinan lokasi.";
-      });
+      );
     });
   </script>
 </body>
